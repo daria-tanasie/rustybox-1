@@ -1,0 +1,44 @@
+Main: 
+    Am colectat argumentele cu env::args(), argumentul de pe pozitia 1 fiind comanda.
+    Pentru decide comanda ce va fi executata am realizat un match cu toate posibilitatile, iar in caz ca aceasta nu se incadreaza in norme, se va afisa "Invalid command".
+
+Comanda pwd:
+    Se apeleaza functia pwd(). Variabila dir primeste path ul directorului curent sau eroare, iar aceste cazuri sunt tratate cu match. In caz de eroare o sa dea "error", iar in caz pozitiv se printeaza path ul cu ajutorul functiei to_str() pt a putea scrie path ul.
+
+Comanda echo:
+    Colectam argumentele, iar daca sunt mai putine de 2, se iese din program. Daca vom gasi flag ul "-n", inseamna ca nu printam cu newline. cnt ne ajuta pentru a determina cate cuvinte trebuie afisate. Daca nu ne aflam la ultimul cuvant, punem spatiu dupa.
+
+Comanda cat:
+    Primim ca parametru al functiei argumentele. Daca avem un singur fisier, args.len() o sa fie 3 si afisam continutul unui singur fiser. Altfel, va trebui sa iteram prin toate si sa facem un string "all_contents" unde punem continutul pt fiecare fisier si afisam la sfarsit cand se iese din funtie si se ajunge in main, daca nu exista eroare.
+
+ Comanda mkdir:
+    Iteram prin argumentele de la pozitia 2 la sfarsit, acestea fiind directoarele ce trebuie create. Pentru a le crea, ne folosim de metoda fs::create_dir. In caz ca nu vom avea eroare, acesta se creeaza, iar altfel se returneza  codul erorii in main.
+
+Comanda mv:
+    Sursa se afla pe pozitia 2 in vectorul de argumente, iar destinatia pe 3. Cu ajutorul metodei fs::rename(), vom executa comanda ceruta, iar in caz de eroare se va return codul erorii din main.
+
+Comanda ln: 
+    Daca pe pozitia 2 se afla -s sau --symbolic, facem un link symbolic cu ajutorul metodei fs::symlink(), care primeste sursa si destinatia. Daca lungimea vectorului args este 4 inseamna ca nu se primeste flag si cream un link cu ajutorul metodei fs::hard_link(). In caz de eroare se returneaza codul erorii din main.
+
+Comanda rmdir:
+    Daca pe pozitia 2 se afla -s sau --symbolic vom da replace la hard link cu un link symbolic. Daca nu avem niciun flag, vom sterge directoarele goale cu ajutorul metodei fs::remove_dir(). In caz de eroare se returneaza codul erorii din main.
+
+Comanda rm: 
+    Flagurile primite incep de pe pozitia 2. Cu ajutorul unui match vom verifica ce fel de flaguri primim. Daca este -d sau --dir vom sterge directoarele primite ca argument. Daca alaturi de -d si --dir avem si -r/-R/--recursive vom sterge recursiv si continutul directoarelor primite ca argument. Daca vom primi doar -r/-R/--recursive stergem recursiv continutul directoarelor, verificand daca continutul este tip fisier sau director pt a le sterge corespunzator. Daca nu se primeste niciun flag, sepot sterge doar fisiere. Daca printre fisiere se afla si directoare, variabila cnt va creste si cu ajutorul ei returnam eroare dupa ce stergem fisierele. 
+
+Comanda ls:
+    Daca lungimea vectorului de argumente este 3, verificam daca avem flag uri sau nu. In caz contrar, trebuie doar sa afisam continutul directorului, sau doar fisierul daca este fisier. Daca  e totusi director, vom parcurge continutul, iar daca este fisier ascuns, nu l vom afisa. Afisam doar numele directorului/fisierului cu file_name().
+    Daca primim ca argument -a/-all si lungimea vectorului este 3, inseamna ca afisam continutul directorului curent, iar daca este mai lung, vom afisa intreg continutul fisierului dat ca argument exact cum am procedat anterior, doar ca se vor afisa si fisierele ascunse.
+    Daca primim flagurile -R/--recursive va trebui sa afisam toate directoarele/fisierele din ierarhie. Facem acest lucru cu ajutorul functiei ls_rec(), care are 2 prametrii. Primul este path ul directorului, iar al 2 lea este true daca primim ca flag si -a/-all pt a afisa intreg continutul, si false daca nu avem -a/--al. Functia ls_rec() este o functie recursiva care trece prin intreg continutul directorului, iar daca gaseste tot un director se va apela din nou, dar inainte se va printa numele.
+    Daca nu avem niciun flag, se afiseaza continutul directoarelor primite ca argument nerecursiv.
+
+Comanda touch:
+    Daca nu primim flag uri, inseamna ca nu vom avea pe prima pozitie a celui de al doilea argument -. Astfel, daca fisierul exista, modificam data si ora de acces a fisierului prin deschiderea acestuia(File::open()), citirea continutului(File::read_to_string()) si vom iesi din functie. Daca fisierul nu exista, il cream cu File::create().
+    Daca avem flag uri, vom verifica tipul acestora. Daca primim -a vom schimba data si ora accesarii deschizand fisierul (File::open) si prin citirea continutului (fs::read_to_string()). Daca primim -c/--no-create nu cream fisierul, iar daca primim -m schimbam ora si data modificarii. In alte cazuri returnam eroare.
+
+Comanda cp:
+    Daca primim flag ul -r/-R/--recursive, verificam daca sursa e director. In caz afirmativ, vom copia recursiv continutul. Daca trebui redenumit directorul, folosim functia cp_rec_rename() care este o functie recursiva si primeste sursa initiala, sursa care se va schimba pe parcurs si destinatia. Pentru aceasta functie parcurgem continutul fiecarui director din directorul parinte, iar daca gasim director, va trebui sa cream unul cu acelasi nume la destinatie si apoi sa apelam din nou functia cu sursa initiala, cea curenta si destinatia. p_buf ne va ajuta sa recream numele initial. Daca in schimb gasim un fisier, va trebui sa stegem parintele initial din path si sa cream un fisier la destinatie, iar apoi copeiem continutul. La final revenim la functia initiala cp(). Daca nu trebui sa redenumim directorul, se va apela functia cp_rec() care primeste doar sursa si destinatia. Aceasta face acelasi lucru. Daca este director, parcurge continutul, iar daca la randul ei va gasi un director, il creeaza la destinatie si apoi apeleaza din nou functia cp_rec(), iar daca se gaseste un fisier, il creeaza la destinatie si copiaza continutul de la sursa. Inapoi la functia initiala cp: daca nu primim flag, va trebui doar sa copiem de la sursa la destinatie, iar daca primim doar sursa, destinatia se va numi la fel. Daca totusi primim si destinatia, si este director, vom creea un fisier la destinatie cu acelasi nume. Facem acest lucru construind noul numes care o sa fie: director destinatie + / + nume fisier sursa. Astfel, dest_file contine path ul fisierului unde copiem continutul sursei.Daca destinatia e fisier, doar copiem continutul de la sursa cu fs::copy().
+
+Comanda chmod:
+    Daca permisiunea primita incepe cu "-", inseamna ca nu este valida comanda.In caz contrar, in variabila type_of_perm vom avea permisiunile. Daca aceasta nu contine + sau - inseamna ca este un numar si intram pe a 3a ramura a if ului. Acest numar este trecut in baza 8 cu metoda u32::from_str_radix(). Permisiunea "permission" va fi apoi transformata cu PemissionsExt::from_mode() si aplicata fisierului cu metoda fs::set_permissions(). In caz ca o sa gasim + sau - in permisiuni inseamna ca vom avea un alt format. Vom afla intai datele fisierului cu metoda metadata() si apoi luam doar permisiunile cu permissions().mode(). Deoarece primim un numar pe 16 biti, doar pe ulltimii 9 vom avea permisiunile de utilizatori si folosind o masca preluam doar ce ne intereseaza si le pastram in init_perms. Cu functia find_char cautam + sau -. Pt + o sa adaugam permisiuni. In variabila perms vom prelua doar tipul de permisiune(rwx) cu functia find_perms() definita mai jos. Apoi, in perm_number vom retine codul fiecarei permisiun pe care il aflam cu functia get_perm_number() definita mai jos.
+    Pentru a adauga permisiuni: Daca este "a" in string, acordam tuturor. Facem sau logic si la fiecare pas vom shifta la stanga perm_number(tipul de permisiuni), deoarece cate 3 biti sunt alocati pentru fiecare tip de utilizator u/g/o. Astfel, in functie de ce tip de utilizator primim, shiftam corespunzator bitii. La final cu PermissionsExt::from_mode() vom seta permission si apoi le dam fisierului cu fs::set_permissions(). Pentru a anula din permisiuni(cazul -), facem exact aceasi pasi ca la  +, doar ca in loc de sau(|) vom folosi xor(^).  
